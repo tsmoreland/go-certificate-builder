@@ -15,11 +15,11 @@ package x509certificates
 
 import (
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
 	"math/big"
-	"strings"
 	"time"
 )
 
@@ -33,13 +33,17 @@ type CertificateBuilder struct {
 	state                         string
 	country                       string
 	dnsNames                      []string
-	keyUsages                     []x509.ExtKeyUsage
+	keyUsage                      x509.KeyUsage
+	enhancedKeyUsages             []x509.ExtKeyUsage
+	extensions                    []pkix.Extension
 	notBefore                     *time.Time
 	notAfter                      *time.Time
 	serialNumber                  *big.Int
+	includeBasicConstraint        bool
 	includeSubjectKeyIdentifier   bool
 	subjectKeyIdentifierCritical  bool
 	includeAuthorityKeyIdentifier bool
+	isCertificateAuthority        bool
 }
 
 // NewCertificateBuilder creates a new certificate builder which can be used to configure and then build x509
@@ -47,19 +51,21 @@ type CertificateBuilder struct {
 //	certificates
 func NewCertificateBuilder() *CertificateBuilder {
 	return &CertificateBuilder{
-		err:              nil,
-		bitSize:          4096,
-		commonName:       "",
-		organization:     "",
-		organizationUnit: "",
-		city:             "",
-		state:            "",
-		country:          "",
-		dnsNames:         make([]string, 0, 0),
-		keyUsages:        make([]x509.KeyUsage, 0, 0),
-		notBefore:        nil,
-		notAfter:         nil,
-		serialNumber:     nil,
+		err:               nil,
+		bitSize:           4096,
+		commonName:        "",
+		organization:      "",
+		organizationUnit:  "",
+		city:              "",
+		state:             "",
+		country:           "",
+		dnsNames:          make([]string, 0, 0),
+		enhancedKeyUsages: make([]x509.ExtKeyUsage, 0, 0),
+		keyUsage: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature |
+			x509.KeyUsageDataEncipherment | x509.KeyUsageContentCommitment,
+		notBefore:    nil,
+		notAfter:     nil,
+		serialNumber: nil,
 	}
 }
 
@@ -73,6 +79,14 @@ func (c *CertificateBuilder) WithBitSize(value int) *CertificateBuilder {
 	}
 
 	c.bitSize = value
+	return c
+}
+
+func (c *CertificateBuilder) WithIsCertificateAuthority(value bool) *CertificateBuilder {
+	if c.err != nil {
+		return c
+	}
+	c.isCertificateAuthority = value
 	return c
 }
 
@@ -138,11 +152,30 @@ func (c *CertificateBuilder) WithDnsNames(values ...string) *CertificateBuilder 
 	return c
 }
 
-func (c *CertificateBuilder) WithKeyUsage(values ...x509.KeyUsage) *CertificateBuilder {
+func (c *CertificateBuilder) WithKeyUsage(usage x509.KeyUsage) *CertificateBuilder {
 	if c.err != nil {
 		return c
 	}
-	c.keyUsages = append(c.keyUsages, values...)
+
+	c.keyUsage = usage
+	return c
+}
+
+func (c *CertificateBuilder) WithEnhancedKeyUsage(values ...x509.ExtKeyUsage) *CertificateBuilder {
+	if c.err != nil {
+		return c
+	}
+	c.enhancedKeyUsages = append(c.enhancedKeyUsages, values...)
+	return c
+}
+
+func (c *CertificateBuilder) WithExtensions(values ...pkix.Extension) *CertificateBuilder {
+	if c.err != nil {
+		return c
+	}
+
+	c.extensions = append(c.extensions, values...)
+	return c
 }
 
 func (c *CertificateBuilder) WithNotBefore(value time.Time) *CertificateBuilder {
@@ -167,6 +200,14 @@ func (c *CertificateBuilder) WithSerialNumber(value *big.Int) *CertificateBuilde
 		return c
 	}
 	c.serialNumber = value
+	return c
+}
+
+func (c *CertificateBuilder) WithBasicConstraint() *CertificateBuilder {
+	if c.err != nil {
+		return c
+	}
+	c.includeBasicConstraint = true
 	return c
 }
 
@@ -195,20 +236,61 @@ func (c *CertificateBuilder) WithIncludeAuthorityKeyIdentifier() *CertificateBui
 }
 
 func (c *CertificateBuilder) BuildSelfSignedCertificate() (*x509.Certificate, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	if err := c.ensureSerialNumberIsSet(); err != nil {
+	template, err := c.buildCertificateTemplate()
+	if err != nil {
 		return nil, err
 	}
 
-	subject := c.buildSubjectName()
-	cert := &x509.Certificate{
-		SerialNumber: c.serialNumber,
-		Subject:
+	rootKey, err := rsa.GenerateKey(rand.Reader, c.bitSize)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, nil
+	if c.isCertificateAuthority {
+		template.IsCA = true
+	}
+
+	certBytes, err := x509.CreateCertificate(rand.Reader, template, template, rootKey.PublicKey, rootKey)
+	if err != nil {
+		return nil, err
+	}
+	cert, err := x509.ParseCertificateRequest(certBytes)
+	if err != nil {
+		return nil, err
+	}
+	return cert, nil
+}
+
+func (c *CertificateBuilder) buildCertificateTemplate() (*x509.Certificate, error) {
+	if err := c.ensureSerialNumberIsSet(); err != nil {
+		return nil, err
+	}
+	notBefore, notAfter := c.getNotBeforeAfterPair()
+	subject := c.buildSubjectName()
+	cert := &x509.Certificate{
+		SerialNumber:          c.serialNumber,
+		Subject:               *subject,
+		BasicConstraintsValid: c.includeBasicConstraint,
+		KeyUsage:              c.keyUsage,
+		ExtKeyUsage:           c.enhancedKeyUsages,
+		NotBefore:             notBefore,
+		NotAfter:              notAfter,
+		Extensions:            c.extensions,
+	}
+	return cert, nil
+}
+
+func (c *CertificateBuilder) getNotBeforeAfterPair() (time.Time, time.Time) {
+	notBefore := time.Now()
+	if c.notBefore != nil {
+		notBefore = *c.notBefore
+	}
+	notAfter := notBefore.Add(time.Hour * 24 * 365)
+	if c.notAfter != nil {
+		notAfter = *c.notAfter
+	}
+
+	return notBefore, notAfter
 }
 
 func (c *CertificateBuilder) ensureSerialNumberIsSet() error {
@@ -225,23 +307,24 @@ func (c *CertificateBuilder) ensureSerialNumberIsSet() error {
 }
 
 func (c *CertificateBuilder) buildSubjectName() *pkix.Name {
-	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf("CN=%v", c.commonName))
+	name := pkix.Name{
+		CommonName: c.commonName,
+	}
 
 	if c.organization != "" {
-		builder.WriteString(fmt.Sprintf(",O=%v", c.organization))
+		name.Organization = []string{c.organization}
 	}
 	if c.organizationUnit != "" {
-		builder.WriteString(fmt.Sprintf(",OU=%v", c.organization))
+		name.OrganizationalUnit = []string{c.organizationUnit}
 	}
 	if c.city != "" {
-		builder.WriteString(fmt.Sprintf(",L=%v", c.city))
+		name.Locality = []string{c.city}
 	}
 	if c.state != "" {
-		builder.WriteString(fmt.Sprintf(",S=%v", c.state))
+		name.Province = []string{c.state}
 	}
 	if c.country != "" {
-		builder.WriteString(fmt.Sprintf(",C=%v", c.country))
+		name.Country = []string{c.country}
 	}
-	return builder.String()
+	return &name
 }
