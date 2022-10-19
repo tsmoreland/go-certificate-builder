@@ -254,7 +254,7 @@ func (c *CertificateBuilder) BuildSelfSignedCertificate() (*x509.Certificate, er
 	if err != nil {
 		return nil, err
 	}
-	cert, err := x509.ParseCertificateRequest(certBytes)
+	cert, err := x509.ParseCertificate(certBytes)
 	if err != nil {
 		return nil, err
 	}
