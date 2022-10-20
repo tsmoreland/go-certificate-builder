@@ -235,15 +235,15 @@ func (c *CertificateBuilder) WithIncludeAuthorityKeyIdentifier() *CertificateBui
 	return c
 }
 
-func (c *CertificateBuilder) BuildSelfSignedCertificate() (*x509.Certificate, error) {
+func (c *CertificateBuilder) BuildSelfSignedCertificate() (*x509.Certificate, *rsa.PrivateKey, error) {
 	template, err := c.buildCertificateTemplate()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	rootKey, err := rsa.GenerateKey(rand.Reader, c.bitSize)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if c.isCertificateAuthority {
@@ -252,13 +252,13 @@ func (c *CertificateBuilder) BuildSelfSignedCertificate() (*x509.Certificate, er
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, template, template, rootKey.PublicKey, rootKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	cert, err := x509.ParseCertificate(certBytes)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return cert, nil
+	return cert, rootKey, nil
 }
 
 func (c *CertificateBuilder) buildCertificateTemplate() (*x509.Certificate, error) {
