@@ -1,5 +1,7 @@
 # go-certificate-builder
 
+[![CI](https://github.com/tsmoreland/go-certificate-builder/actions/workflows/ci.yml/badge.svg)](https://github.com/tsmoreland/go-certificate-builder/actions/workflows/ci.yml)
+
 An implementaton of [certificate-builder](https://github.com/tsmoreland/certificate-builder) (private repo) written in GO rathr than C#
 
 Provides
