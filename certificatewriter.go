@@ -14,18 +14,18 @@ import (
 type ExportFormat int32
 
 const (
-	PemPublicKey ExportFormat = iota
-	PemPrivateKey
-	PFX
+	ExportFormatPemPublicKey ExportFormat = iota
+	ExportFormatPemPrivateKey
+	ExportFormatPFX
 )
 
 func WriteFile(filename string, encoding ExportFormat, certificate *x509.Certificate, key *rsa.PrivateKey) error {
 	switch encoding {
-	case PemPublicKey:
+	case ExportFormatPemPublicKey:
 		return writePublicPemFile(filename, certificate)
-	case PemPrivateKey:
+	case ExportFormatPemPrivateKey:
 		return writePrivatePemFile(filename, key)
-	case PFX:
+	case ExportFormatPFX:
 		return writePfxFile(filename, certificate, key)
 	default:
 		return fmt.Errorf("unsupported encoding")

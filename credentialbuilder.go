@@ -73,7 +73,7 @@ func (c *CertificateBuilder) WithBitSize(value int) *CertificateBuilder {
 	if c.err != nil {
 		return c
 	}
-	if c.bitSize < 2048 {
+	if value < 2048 {
 		c.err = fmt.Errorf("bitsize cannot be less than 2048")
 		return c
 	}
@@ -250,7 +250,7 @@ func (c *CertificateBuilder) BuildSelfSignedCertificate() (*x509.Certificate, *r
 		template.IsCA = true
 	}
 
-	certBytes, err := x509.CreateCertificate(rand.Reader, template, template, rootKey.PublicKey, rootKey)
+	certBytes, err := x509.CreateCertificate(rand.Reader, template, template, &rootKey.PublicKey, rootKey)
 	if err != nil {
 		return nil, nil, err
 	}
