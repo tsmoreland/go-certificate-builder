@@ -255,7 +255,7 @@ func (c *CertificateBuilder) BuildSelfSignedCertificate() (*x509.Certificate, *r
 		template.IsCA = true
 	}
 
-	certBytes, err := x509.CreateCertificate(rand.Reader, template, template, rootKey.PublicKey, rootKey)
+	certBytes, err := x509.CreateCertificate(rand.Reader, template, template, &rootKey.PublicKey, rootKey)
 	if err != nil {
 		return nil, nil, err
 	}
