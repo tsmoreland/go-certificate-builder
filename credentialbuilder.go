@@ -69,6 +69,11 @@ func NewCertificateBuilder() *CertificateBuilder {
 	}
 }
 
+// GetError returns the current error if set, otherwise nil
+func (c *CertificateBuilder) GetError() error {
+	return c.err
+}
+
 func (c *CertificateBuilder) WithBitSize(value int) *CertificateBuilder {
 	if c.err != nil {
 		return c
