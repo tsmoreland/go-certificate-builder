@@ -78,7 +78,7 @@ func (c *CertificateBuilder) WithBitSize(value int) *CertificateBuilder {
 	if c.err != nil {
 		return c
 	}
-	if c.bitSize < 2048 {
+	if value < 2048 {
 		c.err = fmt.Errorf("bitsize cannot be less than 2048")
 		return c
 	}
