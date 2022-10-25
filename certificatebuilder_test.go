@@ -72,3 +72,43 @@ func TestCertificateBuilder_WithIsCertificateAuthorityShouldSetIsCertificateAuth
 		t.Fatal("isCertificateAuthority was not updated")
 	}
 }
+
+func TestCertificateBuilder_WithCommonNameShouldNotUpdateCommmonNameWhenBuilderHasError(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.err = fmt.Errorf("sample error")
+	c.WithCommonName("localhost")
+
+	if c.commonName == "localhost" {
+		t.Fatal("Common name was updated when builder had error")
+	}
+
+}
+
+func TestCertificateBuilder_WithCommonNameShouldNotUpdateCommmonNameWhenValueIsEmpty(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.WithCommonName("localhost")
+	c.WithCommonName("")
+	if c.commonName == "" {
+		t.Fatal("Common name did not reject empty name")
+	}
+
+}
+
+func TestCertificateBuilder_WithCommonNameShouldSetErrorWhenValueIsEmpty(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.WithCommonName("")
+	if c.err == nil {
+		t.Fatal("error was not set when common name was set to empty string")
+	}
+}
+
+func TestCertificateBuilder_WithCommonNameShouldUpdateCommonNameWhenBuilderDoesNotHaveErrorAndValueIsNotEmpty(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.WithCommonName("localhost")
+	if c.commonName != "localhost" {
+		t.Fatal("Common name was not updated when name was valid and no error present")
+	}
+	if c.err != nil {
+		t.Fatal(c.err)
+	}
+}
