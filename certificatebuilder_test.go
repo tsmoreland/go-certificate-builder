@@ -65,11 +65,10 @@ func TestCertificateBuilder_WithIsCertificateAuthority_ShouldNotUpdateIsCertific
 
 func TestCertificateBuilder_WithIsCertificateAuthorityShouldSetIsCertificateAuthorityWhenBuildDoesNotHaveError(t *testing.T) {
 	c := NewCertificateBuilder()
-	expected := true
-	c.WithIsCertificateAuthority(expected)
+	c.WithIsCertificateAuthority(true)
 	actual := c.isCertificateAuthority
 
-	if actual != expected {
+	if actual != true {
 		t.Fatal("isCertificateAuthority was not updated")
 	}
 }
