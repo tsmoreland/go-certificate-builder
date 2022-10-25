@@ -5,7 +5,18 @@ import (
 	"testing"
 )
 
-func TestCertificateBuilder_WithBitSizeShouldReturnNotUpdateBitSizeWhenBuilderHasError(t *testing.T) {
+func TestCertificateBuilder_GetErrorShouldReturnCurrentError(t *testing.T) {
+	c := NewCertificateBuilder()
+	expected := fmt.Errorf("sample err")
+	c.err = expected
+	actual := c.GetError()
+	if actual != expected {
+		t.Fatalf("Error %v does not match expected value %v", actual, expected)
+	}
+
+}
+
+func TestCertificateBuilder_WithBitSizeShouldNotUpdateBitSizeWhenBuilderHasError(t *testing.T) {
 	c := NewCertificateBuilder()
 	expected := c.bitSize
 	c.err = fmt.Errorf("existing-error")
@@ -37,5 +48,28 @@ func TestCertificateBuilder_WithBitSizeShouldSetBitSizeWhenValueIsInRangeAndErro
 
 	if c.bitSize != 2048 {
 		t.Fatalf("bit size %v does not have expected value of 2048", c.bitSize)
+	}
+}
+
+func TestCertificateBuilder_WithIsCertificateAuthority_ShouldNotUpdateIsCertificateAuthorityWhenBuilderHasError(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.err = fmt.Errorf("simple err")
+	expected := c.isCertificateAuthority
+	c.WithIsCertificateAuthority(!expected)
+
+	if c.isCertificateAuthority != expected {
+		t.Fatalf("is Certificate authority was updated to %v", c.isCertificateAuthority)
+	}
+
+}
+
+func TestCertificateBuilder_WithIsCertificateAuthorityShouldSetIsCertificateAuthorityWhenBuildDoesNotHaveError(t *testing.T) {
+	c := NewCertificateBuilder()
+	expected := true
+	c.WithIsCertificateAuthority(expected)
+	actual := c.isCertificateAuthority
+
+	if actual != expected {
+		t.Fatal("isCertificateAuthority was not updated")
 	}
 }
