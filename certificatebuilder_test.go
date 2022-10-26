@@ -73,7 +73,7 @@ func TestCertificateBuilder_WithIsCertificateAuthorityShouldSetIsCertificateAuth
 	}
 }
 
-func TestCertificateBuilder_WithCommonNameShouldNotUpdateCommmonNameWhenBuilderHasError(t *testing.T) {
+func TestCertificateBuilder_WithCommonNameShouldNotUpdateCommonNameWhenBuilderHasError(t *testing.T) {
 	c := NewCertificateBuilder()
 	c.err = fmt.Errorf("sample error")
 	c.WithCommonName("localhost")
@@ -84,7 +84,7 @@ func TestCertificateBuilder_WithCommonNameShouldNotUpdateCommmonNameWhenBuilderH
 
 }
 
-func TestCertificateBuilder_WithCommonNameShouldNotUpdateCommmonNameWhenValueIsEmpty(t *testing.T) {
+func TestCertificateBuilder_WithCommonNameShouldNotUpdateCommonNameWhenValueIsEmpty(t *testing.T) {
 	c := NewCertificateBuilder()
 	c.WithCommonName("localhost")
 	c.WithCommonName("")
@@ -107,6 +107,46 @@ func TestCertificateBuilder_WithCommonNameShouldUpdateCommonNameWhenBuilderDoesN
 	c.WithCommonName("localhost")
 	if c.commonName != "localhost" {
 		t.Fatal("Common name was not updated when name was valid and no error present")
+	}
+	if c.err != nil {
+		t.Fatal(c.err)
+	}
+}
+
+func TestCertificateBuilder_WithOrganizationShouldNotUpdateOrganizationWhenBuilderHasError(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.err = fmt.Errorf("sample error")
+	c.WithOrganization("Acme.")
+
+	if c.organization == "Acme." {
+		t.Fatal("Organization was updated when builder had error")
+	}
+
+}
+
+func TestCertificateBuilder_WithOrganizationShouldNotUpdateOrganizationWhenValueIsEmpty(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.WithOrganization("Acme.")
+	c.WithOrganization("")
+	if c.organization == "" {
+		t.Fatal("Organization did not reject empty name")
+	}
+
+}
+
+func TestCertificateBuilder_WithOrganizationShouldSetErrorWhenValueIsEmpty(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.WithOrganization("")
+	if c.err == nil {
+		t.Fatal("error was not set when organization was set to empty string")
+	}
+}
+
+func TestCertificateBuilder_WithOrganizationShouldUpdateOrganizationWhenBuilderDoesNotHaveErrorAndValueIsNotEmpty(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.WithOrganization("Acme.")
+	if c.organization != "Acme." {
+		t.Fatal("Organization was not updated when name was valid and no error present")
 	}
 	if c.err != nil {
 		t.Fatal(c.err)
