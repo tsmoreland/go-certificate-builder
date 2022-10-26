@@ -112,6 +112,10 @@ func (c *CertificateBuilder) WithOrganization(value string) *CertificateBuilder 
 	if c.err != nil {
 		return c
 	}
+	if len(value) == 0 {
+		c.err = fmt.Errorf("invalid argument, value cannot be empty")
+		return c
+	}
 	c.organization = value
 	return c
 }
