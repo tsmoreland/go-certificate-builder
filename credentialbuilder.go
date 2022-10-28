@@ -136,6 +136,10 @@ func (c *CertificateBuilder) WithCity(value string) *CertificateBuilder {
 	if c.err != nil {
 		return c
 	}
+	if len(value) == 0 {
+		c.err = fmt.Errorf("invalid argument, city unit cannot be empty")
+		return c
+	}
 	c.city = value
 	return c
 }
