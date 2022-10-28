@@ -100,7 +100,7 @@ func (c *CertificateBuilder) WithCommonName(value string) *CertificateBuilder {
 		return c
 	}
 	if len(value) == 0 {
-		c.err = fmt.Errorf("common name cannot be empty")
+		c.err = fmt.Errorf("invalid argument, common name cannot be empty")
 		return c
 	}
 
@@ -113,7 +113,7 @@ func (c *CertificateBuilder) WithOrganization(value string) *CertificateBuilder 
 		return c
 	}
 	if len(value) == 0 {
-		c.err = fmt.Errorf("invalid argument, value cannot be empty")
+		c.err = fmt.Errorf("invalid argument, organization cannot be empty")
 		return c
 	}
 	c.organization = value
@@ -122,6 +122,10 @@ func (c *CertificateBuilder) WithOrganization(value string) *CertificateBuilder 
 
 func (c *CertificateBuilder) WithOrganizationUnit(value string) *CertificateBuilder {
 	if c.err != nil {
+		return c
+	}
+	if len(value) == 0 {
+		c.err = fmt.Errorf("invalid argument, organization unit cannot be empty")
 		return c
 	}
 	c.organizationUnit = value
