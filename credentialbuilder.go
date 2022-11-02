@@ -148,12 +148,20 @@ func (c *CertificateBuilder) WithState(value string) *CertificateBuilder {
 	if c.err != nil {
 		return c
 	}
+	if len(value) == 0 {
+		c.err = fmt.Errorf("invalid argument, state unit cannot be empty")
+		return c
+	}
 	c.state = value
 	return c
 }
 
 func (c *CertificateBuilder) WithCountry(value string) *CertificateBuilder {
 	if c.err != nil {
+		return c
+	}
+	if len(value) == 0 {
+		c.err = fmt.Errorf("invalid argument, state unit cannot be empty")
 		return c
 	}
 	c.country = value
