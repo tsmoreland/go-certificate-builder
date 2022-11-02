@@ -152,3 +152,43 @@ func TestCertificateBuilder_WithOrganizationShouldUpdateOrganizationWhenBuilderD
 		t.Fatal(c.err)
 	}
 }
+
+func TestCertificateBuilder_WithOrganizationUnitShouldNotUpdateOrganizationUnitWhenBuilderHasError(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.err = fmt.Errorf("sample error")
+	c.WithOrganizationUnit("Dynamite Lab")
+
+	if c.organization == "Acme." {
+		t.Fatal("Organization Unit was updated when builder had error")
+	}
+
+}
+
+func TestCertificateBuilder_WithOrganizationUnitShouldNotUpdateOrganizationUnitWhenValueIsEmpty(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.WithOrganizationUnit("Dynamite Lab")
+	c.WithOrganizationUnit("")
+	if c.organizationUnit == "" {
+		t.Fatal("Organization Unit did not reject empty name")
+	}
+
+}
+
+func TestCertificateBuilder_WithOrganizationUnitShouldSetErrorWhenValueIsEmpty(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.WithOrganizationUnit("")
+	if c.err == nil {
+		t.Fatal("error was not set when organization was set to empty string")
+	}
+}
+
+func TestCertificateBuilder_WithOrganizationUnitShouldUpdateOrganizationUnitWhenBuilderDoesNotHaveErrorAndValueIsNotEmpty(t *testing.T) {
+	c := NewCertificateBuilder()
+	c.WithOrganizationUnit("Dynamite Lab")
+	if c.organizationUnit != "Dynamite Lab" {
+		t.Fatal("Organization Unit was not updated when name was valid and no error present")
+	}
+	if c.err != nil {
+		t.Fatal(c.err)
+	}
+}
