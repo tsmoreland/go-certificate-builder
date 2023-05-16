@@ -19,14 +19,14 @@ const (
 	ExportFormatPFX
 )
 
-func WriteFile(filename string, encoding ExportFormat, certificate *x509.Certificate, key *rsa.PrivateKey) error {
+func WriteFile(filename string, encoding ExportFormat, certificate *x509.Certificate, key *rsa.PrivateKey, password string) error {
 	switch encoding {
 	case ExportFormatPemPublicKey:
 		return writePublicPemFile(filename, certificate)
 	case ExportFormatPemPrivateKey:
 		return writePrivatePemFile(filename, key)
 	case ExportFormatPFX:
-		return writePfxFile(filename, certificate, key)
+		return writePfxFile(filename, certificate, key, password)
 	default:
 		return fmt.Errorf("unsupported encoding")
 	}
@@ -48,8 +48,8 @@ func writePemFile(filename string, label string, rawData []byte) error {
 	return os.WriteFile(filename, buffer.Bytes(), 0644)
 }
 
-func writePfxFile(filename string, cert *x509.Certificate, key *rsa.PrivateKey) error {
-	pfxBytes, err := pkcs12.Encode(rand.Reader, key, cert, []*x509.Certificate{}, pkcs12.DefaultPassword)
+func writePfxFile(filename string, cert *x509.Certificate, key *rsa.PrivateKey, password string) error {
+	pfxBytes, err := pkcs12.Encode(rand.Reader, key, cert, []*x509.Certificate{}, password)
 	if err != nil {
 		return err
 	}
